@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(cmd /c \"dir /s\":*)",
+      "Bash(powershell Get-ChildItem:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \".specify/scripts/powershell/update-agent-context.ps1\" -AgentType claude:*)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
