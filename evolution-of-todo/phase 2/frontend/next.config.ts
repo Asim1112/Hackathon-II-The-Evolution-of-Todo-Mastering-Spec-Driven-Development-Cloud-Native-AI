@@ -5,12 +5,15 @@ const nextConfig: NextConfig = {
   turbopack: {}, // ✅ DISABLE turbopack safely
 
   async rewrites() {
-    // Auth is now handled by Better Auth in Next.js (app/api/auth/[...all]/route.ts)
-    // Only proxy non-auth API requests to FastAPI backend
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://asim1112-hackathon2.hf.space";
     return [
       {
+        source: "/api/auth/:path*",
+        destination: `${backendUrl}/api/auth/:path*`,
+      },
+      {
         source: "/api/v1/:path*",
-        destination: "http://127.0.0.1:8000/api/v1/:path*",
+        destination: `${backendUrl}/api/v1/:path*`,
       },
     ];
   },
