@@ -5,9 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from src.api.routes import tasks
 from src.database.session import create_db_and_tables
-from src.auth.middleware import jwt_middleware
-
-
 app = FastAPI(title="Todo API", version="1.0.0")
 
 # CORS middleware for frontend
@@ -24,9 +21,6 @@ app.add_middleware(
 def on_startup():
     create_db_and_tables()
 
-
-# Add middleware for JWT authentication
-app.middleware("http")(jwt_middleware)
 
 app.include_router(tasks.router, prefix="/api/v1", tags=["tasks"])
 
