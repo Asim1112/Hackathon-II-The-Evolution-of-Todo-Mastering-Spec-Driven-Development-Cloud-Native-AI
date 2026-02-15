@@ -1,3 +1,0 @@
-mcp==1.25.0
-openai-agents==0.7.0
-openai-chatkit==1.6.0
