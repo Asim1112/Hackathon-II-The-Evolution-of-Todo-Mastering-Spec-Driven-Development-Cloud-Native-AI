@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   // Turbopack configuration for path aliases
   turbopack: {
     resolveAlias: {
-      "@": path.resolve(__dirname),
+      "@": ".",
     },
   },
 
