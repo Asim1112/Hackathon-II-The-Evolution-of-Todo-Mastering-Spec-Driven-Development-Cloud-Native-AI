@@ -12,7 +12,7 @@ async def test_chat_request():
     """Send a test chat request to the backend."""
 
     # Backend URL
-    base_url = "http://localhost:8000"
+    base_url = "https://asim1112-todo-ai-chatbot.hf.space"
 
     # Test user and conversation
     user_id = "test-user-diagnostic"

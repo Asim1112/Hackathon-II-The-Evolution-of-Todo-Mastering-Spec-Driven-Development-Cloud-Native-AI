@@ -9,7 +9,7 @@ import json
 import time
 
 # Backend URL
-BACKEND_URL = "http://localhost:8000"
+BACKEND_URL = "https://asim1112-todo-ai-chatbot.hf.space"
 
 def send_chat_message(message: str, user_id: str = "test_user_123"):
     """Send a chat message to the backend."""

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "../../auth/[...all]/route";
+import { auth } from "@/lib/auth-server";
 
 // Helper function to forward requests to FastAPI backend
 async function forwardToBackend(request: NextRequest) {
@@ -18,7 +18,7 @@ async function forwardToBackend(request: NextRequest) {
   // Get the path segments to construct the proper backend URL
   const url = new URL(request.url);
   const pathSegments = url.pathname.split('/api/tasks')[1]; // Get everything after /api/tasks
-  const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/v1${pathSegments}${url.search || ''}`;
+  const backendUrl = `${process.env.BACKEND_URL || 'https://asim1112-todo-ai-chatbot.hf.space'}/api/v1${pathSegments}${url.search || ''}`;
 
   // Prepare headers, potentially adding authentication if backend needs it
   const headers: Record<string, string> = {

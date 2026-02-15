@@ -2,7 +2,7 @@
  * Test script to verify the authentication connection between frontend and backend
  */
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://asim1112-todo-ai-chatbot.hf.space';
 
 async function testBackendConnection() {
   try {
