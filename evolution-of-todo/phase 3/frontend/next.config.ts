@@ -2,7 +2,12 @@ import path from "path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  turbopack: {}, // ✅ DISABLE turbopack safely
+  // Turbopack configuration for path aliases
+  turbopack: {
+    resolveAlias: {
+      "@": path.resolve(__dirname),
+    },
+  },
 
   async rewrites() {
     // Auth is now handled by Better Auth in Next.js (app/api/auth/[...all]/route.ts)
