@@ -334,4 +334,4 @@ Assistant: "I've removed 'Call mom' from your task list."
 **"Conversation not persisting"**:
 - Verify database tables were created (conversation, message)
 - Check database connection string
-- Review backend logs for database errors
+- Review backend logs for database errors 
