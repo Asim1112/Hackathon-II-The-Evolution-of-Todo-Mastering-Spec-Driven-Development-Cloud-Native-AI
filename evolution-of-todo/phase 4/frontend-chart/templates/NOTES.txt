@@ -1,0 +1,27 @@
+✅ Frontend chart deployed successfully!
+
+Service name  : {{ include "frontend-chart.fullname" . }}
+Service type  : {{ .Values.service.type }}
+Container port: 3000
+Backend URL   : {{ .Values.backend.serviceUrl }}
+
+Get the external URL (Minikube):
+  minikube service {{ include "frontend-chart.fullname" . }} --url
+
+Or open it directly in your browser:
+  minikube service {{ include "frontend-chart.fullname" . }}
+
+To verify the pod is running:
+  kubectl get pods -l app.kubernetes.io/name={{ include "frontend-chart.name" . }}
+
+To stream logs:
+  kubectl logs -l app.kubernetes.io/name={{ include "frontend-chart.name" . }} -f
+
+─── Important after you get the external URL ────────────────────────────────
+Better Auth requires BETTER_AUTH_BASE_URL to match the URL your browser uses.
+Update it to the Minikube URL and redeploy:
+
+  helm upgrade frontend ./frontend-chart \
+    --set env.BETTER_AUTH_BASE_URL="http://<minikube-ip>:30000" \
+    --set secrets.BETTER_AUTH_SECRET="<real-secret>" \
+    --set secrets.DATABASE_URL="<real-db-url>"

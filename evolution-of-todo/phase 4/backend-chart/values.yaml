@@ -1,0 +1,67 @@
+# ─── Replica count ────────────────────────────────────────────────────────────
+replicaCount: 1
+
+# ─── Image ────────────────────────────────────────────────────────────────────
+image:
+  repository: todo-backend
+  # IfNotPresent = use the local image already loaded into Minikube/Docker
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+# Force a predictable Service name so the frontend can reach it at
+# http://todo-backend:8000 regardless of the Helm release name.
+fullnameOverride: "todo-backend"
+
+# ─── Service ──────────────────────────────────────────────────────────────────
+service:
+  # ClusterIP: only reachable inside the cluster (frontend proxies to it)
+  type: ClusterIP
+  port: 8000
+
+# ─── Non-sensitive environment variables ──────────────────────────────────────
+env:
+  ENVIRONMENT: "production"
+  BACKEND_PORT: "8000"
+  JWT_ALGORITHM: "HS256"
+  JWT_EXPIRATION_DELTA: "604800"
+  USE_OPENAI_FOR_TOOLS: "false"
+  AUTO_DETECT_FUNCTION_CALLING: "true"
+  MCP_SERVER_URL: "http://localhost:8000/mcp"
+
+# ─── Sensitive values (stored as a Kubernetes Secret) ─────────────────────────
+# Override these with --set or a separate values file; never commit real secrets.
+secrets:
+  DATABASE_URL: "postgresql://<user>:<password>@<host>/<db>?sslmode=require"
+  NEON_DATABASE_URL: "postgresql://<user>:<password>@<host>/<db>?sslmode=require"
+  BETTER_AUTH_SECRET: "change-me-in-production"
+  JWT_SECRET: "change-me-in-production"
+  CEREBRAS_API_KEY: ""
+  OPENAI_API_KEY: ""
+
+# ─── Resource limits ──────────────────────────────────────────────────────────
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+# ─── Health probes ────────────────────────────────────────────────────────────
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3

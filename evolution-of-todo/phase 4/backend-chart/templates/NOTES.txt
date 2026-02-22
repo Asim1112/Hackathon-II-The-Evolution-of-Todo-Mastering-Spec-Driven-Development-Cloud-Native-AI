@@ -1,0 +1,19 @@
+✅ Backend chart deployed successfully!
+
+Service name : {{ include "backend-chart.fullname" . }}
+Cluster URL  : http://{{ include "backend-chart.fullname" . }}:{{ .Values.service.port }}
+Health check : http://{{ include "backend-chart.fullname" . }}:{{ .Values.service.port }}/health
+
+The backend is a ClusterIP service — reachable only inside the cluster.
+The frontend chart points its BACKEND_URL at this address automatically.
+
+To verify the pod is running:
+  kubectl get pods -l app.kubernetes.io/name={{ include "backend-chart.name" . }}
+
+To stream logs:
+  kubectl logs -l app.kubernetes.io/name={{ include "backend-chart.name" . }} -f
+
+To update secrets without a full redeploy:
+  helm upgrade backend ./backend-chart \
+    --set secrets.DATABASE_URL="<real-url>" \
+    --set secrets.BETTER_AUTH_SECRET="<real-secret>"

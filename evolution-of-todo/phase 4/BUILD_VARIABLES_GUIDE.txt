@@ -1,0 +1,146 @@
+# Build Variables Guide for Frontend Docker Image
+
+## What Are These Variables?
+
+### **Build-Time Variables (ARG)**
+These are set when you build the Docker image. They get baked into the image and CANNOT be changed at runtime.
+
+- `DATABASE_URL` - Only needed to prevent build errors, not used at runtime
+- `NEON_DATABASE_URL` - Optional alternative database connection
+- `NEXT_PUBLIC_API_URL` - ⚠️ **IMPORTANT**: This value IS embedded in the final image
+
+### **Runtime Variables (ENV)**
+These can be set when you run the container and can be changed without rebuilding.
+
+- `BETTER_AUTH_SECRET` - Authentication secret key
+- `DATABASE_URL` - Actual database connection used by the app at runtime
+- `BACKEND_URL` - Backend API server URL
+
+---
+
+## What Values Should You Use?
+
+### **During Local Development with docker-compose**
+
+No action needed! The docker-compose.yml already has defaults:
+
+```yaml
+build:
+  args:
+    DATABASE_URL: "postgresql://localhost/dummy"  # Dummy value for build
+    NEXT_PUBLIC_API_URL: "http://localhost:3000"  # Your local frontend URL
+```
+
+Just run:
+```bash
+docker compose up --build
+```
+
+### **For Production Deployment**
+
+1. **Change NEXT_PUBLIC_API_URL before building:**
+   ```bash
+   docker build \
+     -t frontend:prod \
+     --build-arg NEXT_PUBLIC_API_URL="https://yourdomain.com" \
+     ./frontend
+   ```
+
+2. **Set runtime variables in .env file or docker-compose.yml:**
+   ```env
+   BETTER_AUTH_SECRET=your-secret-key-here
+   DATABASE_URL=postgresql://user:pass@prod-db:5432/todoapp
+   BACKEND_URL=https://api.yourdomain.com
+   ```
+
+---
+
+## The Build Process Explained
+
+### Step 1: Build Image
+```
+docker build -t frontend:latest ./frontend
+    ↓
+Builds image with NEXT_PUBLIC_API_URL="http://localhost:3000" baked in
+```
+
+### Step 2: Run Container
+```
+docker run -e DATABASE_URL="postgres://prod-db/app" frontend:latest
+    ↓
+Container runs with new DATABASE_URL (if app uses it at runtime)
+BUT NEXT_PUBLIC_API_URL is still "http://localhost:3000" in browser code
+```
+
+---
+
+## Quick Reference Table
+
+| Variable | Type | Changeable | Used Where | Example |
+|----------|------|-----------|-----------|---------|
+| `DATABASE_URL` | Build arg | No | Build-time only (prevents errors) | `postgresql://localhost/dummy` |
+| `NEXT_PUBLIC_API_URL` | Build arg | No (baked in) | Browser API calls | `http://localhost:3000` |
+| `DATABASE_URL` | Runtime env | Yes | App at runtime | `postgresql://prod-db/app` |
+| `BETTER_AUTH_SECRET` | Runtime env | Yes | Auth system at runtime | `your-secret-key` |
+| `BACKEND_URL` | Runtime env | Yes | Next.js API routes at runtime | `http://backend:8000` |
+
+---
+
+## Common Scenarios
+
+### Scenario 1: Building for Local Docker Compose
+✅ Use defaults in docker-compose.yml - nothing to change
+
+### Scenario 2: Building for Production (Different Domain)
+```bash
+# Step 1: Build image with production domain
+docker build \
+  -t frontend:prod \
+  --build-arg NEXT_PUBLIC_API_URL="https://app.example.com" \
+  ./frontend
+
+# Step 2: Run with production database
+docker run \
+  -e DATABASE_URL="postgresql://prod-user:pass@prod-db/app" \
+  -e BETTER_AUTH_SECRET="prod-secret-key" \
+  -e BACKEND_URL="https://api.example.com" \
+  frontend:prod
+```
+
+### Scenario 3: Switching Between Local & Production
+Create two separate images:
+```bash
+# Local image
+docker build -t frontend:local \
+  --build-arg NEXT_PUBLIC_API_URL="http://localhost:3000" \
+  ./frontend
+
+# Production image
+docker build -t frontend:prod \
+  --build-arg NEXT_PUBLIC_API_URL="https://app.example.com" \
+  ./frontend
+```
+
+---
+
+## TL;DR for Your Setup
+
+**For now (local development):**
+- Don't worry about these variables
+- Just run: `docker compose up --build`
+- Everything uses defaults
+
+**When deploying to production:**
+1. Change `NEXT_PUBLIC_API_URL` in build command (before building)
+2. Set runtime variables in `.env` file or docker-compose.yml
+3. The database connection at runtime is separate from the build
+
+---
+
+## Important Notes
+
+⚠️ **DATABASE_URL at build time is just a dummy value** - it's used to satisfy Next.js during the build process. Your actual database connection happens at runtime through the environment variable.
+
+✅ **NEXT_PUBLIC_API_URL is permanent** - it gets embedded in the JavaScript sent to the browser. Change it only if you're deploying to a different domain.
+
+✅ **Runtime variables can be changed anytime** - they don't require rebuilding the image.

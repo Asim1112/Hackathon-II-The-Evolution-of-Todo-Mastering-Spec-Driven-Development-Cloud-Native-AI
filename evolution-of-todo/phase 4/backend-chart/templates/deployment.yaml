@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "backend-chart.fullname" . }}
+  labels:
+    {{- include "backend-chart.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "backend-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "backend-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+
+          # ── Non-sensitive env vars ───────────────────────────────────────────
+          env:
+            - name: ENVIRONMENT
+              value: {{ .Values.env.ENVIRONMENT | quote }}
+            - name: BACKEND_PORT
+              value: {{ .Values.env.BACKEND_PORT | quote }}
+            - name: JWT_ALGORITHM
+              value: {{ .Values.env.JWT_ALGORITHM | quote }}
+            - name: JWT_EXPIRATION_DELTA
+              value: {{ .Values.env.JWT_EXPIRATION_DELTA | quote }}
+            - name: USE_OPENAI_FOR_TOOLS
+              value: {{ .Values.env.USE_OPENAI_FOR_TOOLS | quote }}
+            - name: AUTO_DETECT_FUNCTION_CALLING
+              value: {{ .Values.env.AUTO_DETECT_FUNCTION_CALLING | quote }}
+            - name: MCP_SERVER_URL
+              value: {{ .Values.env.MCP_SERVER_URL | quote }}
+
+            # ── Sensitive env vars pulled from the Secret ────────────────────
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "backend-chart.secretName" . }}
+                  key: DATABASE_URL
+            - name: NEON_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "backend-chart.secretName" . }}
+                  key: NEON_DATABASE_URL
+            - name: BETTER_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "backend-chart.secretName" . }}
+                  key: BETTER_AUTH_SECRET
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "backend-chart.secretName" . }}
+                  key: JWT_SECRET
+            - name: CEREBRAS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "backend-chart.secretName" . }}
+                  key: CEREBRAS_API_KEY
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "backend-chart.secretName" . }}
+                  key: OPENAI_API_KEY
+
+          # ── Health probes ────────────────────────────────────────────────────
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+
+          # ── Resource budgets ─────────────────────────────────────────────────
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

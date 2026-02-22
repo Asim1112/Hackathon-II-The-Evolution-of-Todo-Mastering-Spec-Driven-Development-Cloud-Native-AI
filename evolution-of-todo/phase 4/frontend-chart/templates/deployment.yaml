@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "frontend-chart.fullname" . }}
+  labels:
+    {{- include "frontend-chart.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "frontend-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "frontend-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+
+          # ── Non-sensitive env vars ───────────────────────────────────────────
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.env.NODE_ENV | quote }}
+            - name: NEXT_TELEMETRY_DISABLED
+              value: {{ .Values.env.NEXT_TELEMETRY_DISABLED | quote }}
+            - name: BETTER_AUTH_BASE_URL
+              value: {{ .Values.env.BETTER_AUTH_BASE_URL | quote }}
+
+            # ── Backend service URL ──────────────────────────────────────────
+            # next.config.ts reads BACKEND_URL at startup to resolve rewrite
+            # destinations. Points to the backend ClusterIP service by DNS name.
+            - name: BACKEND_URL
+              value: {{ .Values.backend.serviceUrl | quote }}
+
+            # ── Sensitive env vars pulled from the Secret ────────────────────
+            - name: BETTER_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "frontend-chart.secretName" . }}
+                  key: BETTER_AUTH_SECRET
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "frontend-chart.secretName" . }}
+                  key: DATABASE_URL
+            - name: NEON_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "frontend-chart.secretName" . }}
+                  key: NEON_DATABASE_URL
+
+          # ── Health probes ────────────────────────────────────────────────────
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+
+          # ── Resource budgets ─────────────────────────────────────────────────
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

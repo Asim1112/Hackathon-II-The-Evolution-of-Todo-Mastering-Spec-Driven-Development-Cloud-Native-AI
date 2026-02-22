@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      # These build arguments are used ONLY during image build
+      # They get baked into the image and cannot be changed at runtime
+      args:
+        # DATABASE_URL: Dummy value for build-time, not used at runtime
+        DATABASE_URL: "postgresql://localhost/dummy"
+        # NEXT_PUBLIC_API_URL: This IS baked into the image - change if needed for your domain
+        NEXT_PUBLIC_API_URL: "http://localhost:3000"
+        # NEON_DATABASE_URL: Optional, leave blank unless using Neon
+        NEON_DATABASE_URL: ""
+    ports:
+      - "3000:3000"
+    environment:
+      # These runtime environment variables can be changed without rebuilding
+      NODE_ENV: production
+      # Better Auth configuration (runtime)
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-change-in-production}
+      BETTER_AUTH_BASE_URL: ${BETTER_AUTH_BASE_URL:-http://localhost:3000}
+      # Database connection (runtime)
+      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@postgres:5432/todoapp}
+      NEON_DATABASE_URL: ${NEON_DATABASE_URL}
+      # Backend API URL
+      BACKEND_URL: ${BACKEND_URL:-http://backend:8000}
+    depends_on:
+      - backend
+    networks:
+      - todo-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@postgres:5432/todoapp}
+      NEON_DATABASE_URL: ${NEON_DATABASE_URL}
+    depends_on:
+      - postgres
+    networks:
+      - todo-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-todoapp}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - todo-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  todo-network:
+    driver: bridge

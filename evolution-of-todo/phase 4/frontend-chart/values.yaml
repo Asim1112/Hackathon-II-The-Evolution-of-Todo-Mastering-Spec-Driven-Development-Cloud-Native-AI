@@ -1,0 +1,71 @@
+# ─── Replica count ────────────────────────────────────────────────────────────
+replicaCount: 1
+
+# ─── Image ────────────────────────────────────────────────────────────────────
+image:
+  repository: todo-frontend
+  # IfNotPresent = use the local image already loaded into Minikube/Docker
+  pullPolicy: IfNotPresent
+  tag: "v4"
+
+# Force a predictable Service name independent of the Helm release name.
+fullnameOverride: "todo-frontend"
+
+# ─── Service ──────────────────────────────────────────────────────────────────
+service:
+  # NodePort makes the frontend reachable from outside the Minikube cluster.
+  # Access it with: minikube service todo-frontend --url
+  type: NodePort
+  port: 3000
+  nodePort: 30000   # Fixed port on the Minikube node (range 30000-32767)
+
+# ─── Backend connection ───────────────────────────────────────────────────────
+# This is injected as BACKEND_URL into the container.
+# next.config.ts reads this at startup to route server-side API proxy rewrites.
+# "todo-backend" matches the fullnameOverride in backend-chart — never changes.
+backend:
+  serviceUrl: "http://todo-backend:8000"
+
+# ─── Non-sensitive environment variables ──────────────────────────────────────
+env:
+  NODE_ENV: "production"
+  NEXT_TELEMETRY_DISABLED: "1"
+  # Update to the external URL Minikube exposes, e.g. http://<minikube-ip>:30000
+  # Run: minikube service todo-frontend --url
+  BETTER_AUTH_BASE_URL: "http://127.0.0.1:64387"
+  BETTER_AUTH_TRUSTED_ORIGINS: "http://127.0.0.1:64387"
+
+# ─── Sensitive values (stored as a Kubernetes Secret) ─────────────────────────
+# Override these with --set or a separate values file; never commit real secrets.
+secrets:
+  BETTER_AUTH_SECRET: "change-me-in-production"
+  DATABASE_URL: "postgresql://<user>:<password>@<host>/<db>?sslmode=require"
+  NEON_DATABASE_URL: "postgresql://<user>:<password>@<host>/<db>?sslmode=require"
+
+# ─── Resource limits ──────────────────────────────────────────────────────────
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+# ─── Health probes ────────────────────────────────────────────────────────────
+livenessProbe:
+  httpGet:
+    path: /
+    port: 3000
+  initialDelaySeconds: 20
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 3000
+  initialDelaySeconds: 15
+  periodSeconds: 15
+  timeoutSeconds: 10
+  failureThreshold: 3
